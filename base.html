@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="csrf-token" content="{{ csrf_token() }}"/>
+  <title>{% block title %}GhostLeaks{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg"/>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/gl-design-system.css"/>
+  <style>
+    /* ---- shared nav + hamburger (base.html) ---- */
+    nav{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:16px 32px;position:relative;z-index:100;
+    }
+    .hamburger{
+      display:none;flex-direction:column;justify-content:center;gap:5px;
+      width:32px;height:32px;background:none;border:none;cursor:pointer;padding:0;z-index:110;
+      flex-shrink:0;
+    }
+    .hamburger span{
+      display:block;width:100%;height:2px;background:var(--text,#d7dde5);
+      border-radius:2px;transition:transform .2s ease,opacity .2s ease;
+    }
+    .hamburger.active span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+    .hamburger.active span:nth-child(2){opacity:0;}
+    .hamburger.active span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+    /* current-page highlight — higher specificity than each page's own
+       .btn-ghost rule, so it applies no matter which page defines it */
+    .btn-ghost.active{
+      border-color:var(--accent,#3ddc97)!important;
+      color:var(--accent,#3ddc97)!important;
+      background:rgba(61,220,151,0.10);
+    }
+    @media (max-width:768px){
+      .hamburger{display:flex;}
+      /* nav .nav-links has higher CSS specificity than a page's own plain
+         .nav-links rule, so these declarations win even when a page sets
+         its own flex-wrap/display on .nav-links — this is what keeps the
+         dropdown from breaking on pages with many links (dashboard,
+         findings, settings) that define their own nav CSS. */
+      nav .nav-links{
+        display:flex!important;
+        position:absolute;top:100%;left:0;right:0;
+        flex-direction:column!important;flex-wrap:nowrap!important;
+        align-items:stretch;gap:0;
+        background:var(--panel,#11161d);border-bottom:1px solid var(--line,#1c2430);
+        box-shadow:0 12px 24px rgba(0,0,0,0.35);
+        max-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+        transition:max-height .25s ease;padding:0 24px;
+      }
+      nav .nav-links.open{max-height:min(70vh,520px);padding:14px 24px 22px;}
+      nav .nav-links a,nav .nav-links span{
+        margin:0;padding:12px 4px;width:100%;
+        border-bottom:1px solid var(--line,#1c2430);
+      }
+      nav .nav-links a:last-child,nav .nav-links span:last-child{border-bottom:none;}
+    }
+  </style>
+  {% block extra_style %}{% endblock %}
+</head>
+<body>
+<nav class="gl-nav">
+  <a href="{% block nav_brand_href %}/{% endblock %}" class="nav-brand"><span class="dot"></span><span>{% block nav_brand_label %}GHOSTLEAKS{% endblock %}</span></a>
+  <button class="hamburger" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-links" id="navLinks">
+    {% block nav_links %}{% endblock %}
+  </div>
+</nav>
+
+{% block content %}{% endblock %}
+
+<script>
+(function(){
+  var btn = document.getElementById('navToggle');
+  var links = document.getElementById('navLinks');
+  if(!btn || !links) return;
+  function closeMenu(){
+    links.classList.remove('open');
+    btn.classList.remove('active');
+    btn.setAttribute('aria-expanded', 'false');
+  }
+  btn.addEventListener('click', function(e){
+    e.stopPropagation();
+    var open = links.classList.toggle('open');
+    btn.classList.toggle('active', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  links.querySelectorAll('a').forEach(function(a){
+    a.addEventListener('click', closeMenu);
+  });
+  document.addEventListener('click', function(e){
+    if(links.classList.contains('open') && !links.contains(e.target) && e.target !== btn){
+      closeMenu();
+    }
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') closeMenu();
+  });
+})();
+</script>
+</body>
+</html>
