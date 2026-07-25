@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Workspace Settings — {{ brand.name }}{% endblock %}
+
+{% block nav_brand_href %}/dashboard{% endblock %}
+{% block nav_brand_label %}{{ brand.name.upper() }}{% endblock %}
+
+{% block nav_links %}
+<span class="nav-user mono">[ <span>{{ current_user.name }}</span> ]</span>
+    <a href="/dashboard" class="btn-ghost{{ ' active' if request.path == '/dashboard' else '' }}">Dashboard</a>
+    <a href="/findings" class="btn-ghost{{ ' active' if request.path == '/findings' else '' }}">Findings</a>
+    <a href="/timeline" class="btn-ghost{{ ' active' if request.path == '/timeline' else '' }}">Timeline</a>
+    {% if current_user.is_admin() %}<a href="/admin/audit-logs" class="btn-ghost{{ ' active' if request.path == '/admin/audit-logs' else '' }}">Audit Log</a>{% endif %}
+    {% if current_user.role == 'owner' %}<a href="/admin/tenant-settings" class="btn-ghost{{ ' active' if request.path == '/admin/tenant-settings' else '' }}">Workspace</a>{% endif %}
+    <a href="/settings" class="btn-ghost{{ ' active' if request.path == '/settings' else '' }}">Settings</a>
+    <a href="/logout" class="btn-logout">Logout</a>
+{% endblock %}
+
+{% block extra_style %}
+<style>
+    :root{ --accent:{{ brand.color }}; }
+    body{padding-bottom:40px;}
+    .gl-shell-narrow{padding-top:32px;}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:26px;margin-bottom:20px;box-shadow:var(--shadow-card);}
+    h1{font-size:1.05em;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:9px;}
+    h1 svg{width:18px;height:18px;stroke:var(--accent);}
+    label{display:block;color:var(--muted);font-size:0.78em;margin-bottom:6px;margin-top:14px;}
+    input[type=text]{width:100%;padding:11px 13px;background:#070a0f;border:1px solid var(--line);color:var(--text);border-radius:9px;font-size:0.9em;transition:border-color .15s;}
+    input[type=text]:focus{outline:none;border-color:var(--accent);}
+    input[type=color]{height:42px;width:84px;border:1px solid var(--line);border-radius:9px;background:#070a0f;padding:4px;}
+    button{margin-top:18px;width:100%;padding:12px;background:var(--accent);border:none;color:#06110c;font-weight:600;border-radius:9px;cursor:pointer;transition:filter .15s;}
+    button:hover{filter:brightness(1.08);}
+    .invite{font-family:'JetBrains Mono',monospace;font-size:0.8em;background:#070a0f;padding:12px 14px;border-radius:9px;border:1px solid var(--line);word-break:break-all;color:var(--muted);}
+    table{width:100%;border-collapse:collapse;margin-top:10px;}
+    th{text-align:left;padding:9px;color:var(--muted);font-size:0.7em;text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--line);font-family:'JetBrains Mono',monospace;}
+    td{padding:9px;border-bottom:1px solid var(--line-soft);font-size:0.86em;color:var(--text-dim);}
+    tr:last-child td{border-bottom:none;}
+    .flash{padding:11px 14px;border-radius:9px;font-size:0.85rem;margin-bottom:14px;background:color-mix(in srgb, var(--accent) 8%, var(--panel));border:1px solid color-mix(in srgb, var(--accent) 45%, transparent);color:var(--accent);}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gl-shell-narrow">
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}{% for m in messages %}<div class="flash">{{ m }}</div>{% endfor %}{% endif %}
+  {% endwith %}
+  <div class="card">
+    <h1><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19c-4-3-8-6-8-11a4 4 0 0 1 8-2 4 4 0 0 1 8 2c0 5-4 8-8 11Z"/></svg>White-label Branding</h1>
+    <p style="color:var(--muted);font-size:0.82em;">This name and color apply across the dashboard, timeline, and PDF reports for everyone in this workspace only — other tenants on this deployment are unaffected.</p>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <label>Brand name</label>
+      <input type="text" name="brand_name" value="{{ tenant.brand_name }}"/>
+      <label>Primary color</label>
+      <input type="color" name="primary_color" value="{{ tenant.primary_color }}"/>
+      <label>Logo URL (optional)</label>
+      <input type="text" name="logo_url" value="{{ tenant.logo_url or '' }}" placeholder="https://..."/>
+      <button type="submit">Save branding</button>
+    </form>
+  </div>
+  <div class="card">
+    <h1><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Invite teammates</h1>
+    <p style="color:var(--muted);font-size:0.82em;margin-bottom:8px;">Share this registration link — anyone who signs up through it joins this workspace's isolated tenant.</p>
+    <div class="invite">{{ request.url_root }}register?tenant_slug={{ tenant.slug }}</div>
+  </div>
+  <div class="card">
+    <h1><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Members ({{ members|length }})</h1>
+    <table>
+      <thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead>
+      <tbody>
+        {% for m in members %}
+        <tr><td>{{ m.name }}</td><td>{{ m.email }}</td><td>{{ m.role }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

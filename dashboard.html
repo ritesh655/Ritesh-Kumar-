@@ -1,0 +1,482 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — {{ brand.name }}{% endblock %}
+
+{% block nav_brand_href %}/dashboard{% endblock %}
+{% block nav_brand_label %}{{ brand.name.upper() }}{% endblock %}
+
+{% block nav_links %}
+<span class="nav-user mono">[ <span>{{ current_user.name }}</span> ]</span>
+    <a href="/dashboard" class="btn-ghost{{ ' active' if request.path == '/dashboard' else '' }}">Dashboard</a>
+    <a href="/findings" class="btn-ghost{{ ' active' if request.path == '/findings' else '' }}">Findings</a>
+    <a href="/timeline" class="btn-ghost{{ ' active' if request.path == '/timeline' else '' }}">Timeline</a>
+    {% if current_user.is_admin() %}<a href="/admin/audit-logs" class="btn-ghost{{ ' active' if request.path == '/admin/audit-logs' else '' }}">Audit Log</a>{% endif %}
+    {% if current_user.role == 'owner' %}<a href="/admin/tenant-settings" class="btn-ghost{{ ' active' if request.path == '/admin/tenant-settings' else '' }}">Workspace</a>{% endif %}
+    <a href="/settings" class="btn-ghost{{ ' active' if request.path == '/settings' else '' }}">Settings</a>
+    <a href="/logout" class="btn-logout">Logout</a>
+{% endblock %}
+
+{% block extra_style %}
+<style>
+    :root{ --accent:{{ brand.color }}; }
+    body{padding-bottom:40px;}
+
+    .gl-shell{padding-top:32px;}
+    .welcome{margin-bottom:26px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+    .welcome h1{color:var(--text);font-size:1.5em;font-weight:600;}
+    .welcome .user-tagline{color:var(--muted);font-size:0.85em;margin-top:6px;}
+    .welcome p.identity{color:var(--muted);font-size:0.8em;margin-top:3px;font-family:'JetBrains Mono',monospace;}
+    .live-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:color-mix(in srgb, var(--accent) 10%, var(--panel));border:1px solid color-mix(in srgb, var(--accent) 35%, var(--line));color:var(--accent);font-size:0.72em;font-family:'JetBrains Mono',monospace;letter-spacing:0.5px;white-space:nowrap;margin-top:4px;}
+    .live-pill .pulse{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent);animation:gl-pulse 1.8s ease-in-out infinite;}
+    @keyframes gl-pulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
+
+    /* Executive Risk Score card */
+    .risk-score-card{
+      background:linear-gradient(135deg, var(--panel), var(--panel-2));
+      border:1px solid var(--line);border-radius:var(--radius);padding:26px 28px;margin-bottom:22px;
+      display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
+      box-shadow:var(--shadow-card);position:relative;overflow:hidden;
+    }
+    .risk-score-card::after{
+      content:'';position:absolute;top:-60%;right:-10%;width:300px;height:300px;border-radius:50%;
+      background:radial-gradient(circle, color-mix(in srgb, var(--accent) 8%, transparent), transparent 70%);
+      pointer-events:none;
+    }
+    .risk-score-left{display:flex;align-items:center;gap:20px;position:relative;z-index:1;}
+    .risk-score-ring{position:relative;width:84px;height:84px;flex-shrink:0;}
+    .risk-score-ring svg{transform:rotate(-90deg);width:84px;height:84px;}
+    .risk-score-ring circle{fill:none;stroke-width:6;}
+    .risk-score-ring .ring-bg{stroke:var(--line);}
+    .risk-score-ring .ring-fill{stroke-linecap:round;transition:stroke-dashoffset .8s cubic-bezier(.22,1,.36,1),stroke .3s;}
+    .risk-score-num{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.3em;color:var(--text);}
+    .risk-score-info h2{font-family:'JetBrains Mono',monospace;font-size:0.72em;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:7px;font-weight:600;}
+    .risk-score-level{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.2em;}
+    .risk-score-sub{color:var(--muted);font-size:0.8em;margin-top:5px;max-width:280px;line-height:1.5;}
+    .risk-badge-low{color:var(--accent);}
+    .risk-badge-medium{color:var(--warn);}
+    .risk-badge-high{color:#ff8a4d;}
+    .risk-badge-critical{color:var(--danger);}
+    .risk-badge-unknown{color:var(--muted);}
+
+    .stats{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px;}
+    @media(min-width:600px){.stats{grid-template-columns:repeat(4,1fr);}}
+    .stat-box{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-sm);padding:18px 20px;transition:border-color .15s ease,transform .15s ease;}
+    .stat-box:hover{border-color:color-mix(in srgb, var(--muted) 50%, var(--line));transform:translateY(-1px);}
+    .stat-box .stat-icon{width:26px;height:26px;margin-bottom:10px;opacity:0.85;}
+    .stat-box .num{font-family:'Space Grotesk',sans-serif;font-size:1.9em;font-weight:700;color:var(--text);line-height:1;}
+    .stat-box .lbl{font-size:0.68em;color:var(--muted);margin-top:6px;text-transform:uppercase;letter-spacing:0.8px;}
+
+    .warning-box{background:var(--warn-bg);border:1px solid color-mix(in srgb, var(--warn) 45%, transparent);border-radius:var(--radius-sm);padding:13px 16px;font-size:0.83em;color:var(--warn);margin-bottom:20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .warning-box a{color:var(--warn);font-weight:600;text-decoration:none;}
+    .warning-box form{display:inline;}
+    .warning-box button{width:auto;padding:5px 12px;font-size:0.85em;display:inline;}
+
+    .tabs{display:flex;gap:4px;margin-bottom:20px;flex-wrap:wrap;border-bottom:1px solid var(--line);}
+    .tab-btn{padding:10px 18px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;font-size:0.86em;font-weight:500;transition:all .15s ease;margin-bottom:-1px;display:inline-flex;align-items:center;gap:7px;}
+    .tab-btn:hover{color:var(--text-dim);}
+    .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+    .tab-content{display:none;animation:gl-fade-in .25s ease;}
+    .tab-content.active{display:block;}
+
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:26px;margin-bottom:20px;box-shadow:var(--shadow-card);}
+    .card h2{color:var(--text);margin-bottom:8px;font-family:'Space Grotesk',sans-serif;font-size:1.05em;font-weight:600;letter-spacing:0;text-transform:none;display:flex;align-items:center;gap:9px;}
+    .card h2 svg{width:19px;height:19px;stroke:var(--accent);flex-shrink:0;}
+    .card .card-desc{color:var(--muted);font-size:0.82em;margin-bottom:16px;line-height:1.6;}
+
+    input[type="text"],input[type="password"]{width:100%;padding:12px 14px;background:#070a0f;border:1px solid var(--line);color:var(--text);border-radius:9px;font-family:'Inter',sans-serif;font-size:0.9em;margin-bottom:12px;transition:border-color .15s,box-shadow .15s;}
+    input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);}
+    button{width:100%;padding:12px;background:var(--accent);color:#06110c;border:none;border-radius:9px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;font-size:0.92em;transition:filter .15s,transform .1s;}
+    button:hover{filter:brightness(1.08);}
+    button:active{transform:scale(0.99);}
+    button:disabled{background:var(--panel-2);color:var(--muted);cursor:not-allowed;filter:none;border:1px solid var(--line);}
+
+    .strength-bar{height:5px;border-radius:3px;margin:5px 0 12px;background:var(--line);overflow:hidden;}
+    .strength-fill{height:100%;border-radius:3px;transition:width .3s,background .3s;width:0%;}
+    .strength-label{font-size:0.75em;color:var(--muted);margin-bottom:12px;}
+
+    .result-box{margin-top:15px;padding:15px 16px;border-radius:9px;display:none;font-size:0.86em;line-height:1.7;}
+    .result-safe{background:color-mix(in srgb, var(--accent) 8%, var(--panel));border:1px solid color-mix(in srgb, var(--accent) 45%, transparent);color:var(--accent);}
+    .result-leaked{background:var(--danger-bg);border:1px solid color-mix(in srgb, var(--danger) 45%, transparent);color:var(--danger);}
+    .result-error{background:var(--warn-bg);border:1px solid color-mix(in srgb, var(--warn) 45%, transparent);color:var(--warn);}
+
+    .loader{display:none;align-items:center;gap:9px;color:var(--accent);margin-top:12px;font-size:0.85em;font-family:'JetBrains Mono',monospace;}
+    .loader::before{content:'';width:13px;height:13px;border-radius:50%;border:2px solid color-mix(in srgb, var(--accent) 30%, transparent);border-top-color:var(--accent);animation:gl-spin .7s linear infinite;flex-shrink:0;}
+    @keyframes gl-spin{to{transform:rotate(360deg);}}
+
+    .file-drop{border:2px dashed var(--line);border-radius:var(--radius-sm);padding:28px;text-align:center;color:var(--muted);margin-bottom:13px;cursor:pointer;transition:border-color .15s,background .15s;font-size:0.85em;}
+    .file-drop:hover{border-color:var(--accent);background:color-mix(in srgb, var(--accent) 4%, transparent);}
+    .file-drop input{display:none;}
+    .file-name{color:var(--accent);margin-top:6px;font-size:0.85em;}
+
+    .bulk-summary{display:flex;gap:12px;margin:15px 0;flex-wrap:wrap;}
+    .summary-box{flex:1;min-width:90px;padding:14px;border-radius:var(--radius-sm);text-align:center;border:1px solid var(--line);}
+    .summary-total{background:var(--panel-2);}
+    .summary-leaked{background:var(--danger-bg);border-color:color-mix(in srgb, var(--danger) 40%, transparent);}
+    .summary-safe{background:color-mix(in srgb, var(--accent) 8%, var(--panel));border-color:color-mix(in srgb, var(--accent) 40%, transparent);}
+    .summary-box .num{font-family:'Space Grotesk',sans-serif;font-size:1.7em;font-weight:700;}
+    .summary-box .lbl{font-size:0.65em;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:1px;}
+
+    table{width:100%;border-collapse:collapse;margin-top:12px;font-size:0.83em;}
+    th{background:var(--panel-2);color:var(--muted);padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:0.75em;text-transform:uppercase;letter-spacing:0.6px;font-weight:600;}
+    td{padding:10px 12px;border-bottom:1px solid var(--line-soft);word-break:break-all;color:var(--text-dim);}
+    tr:hover td{background:var(--panel-hover);}
+    .status-leaked{color:var(--danger);font-weight:600;}
+    .status-safe{color:var(--accent);}
+    .status-warn{color:var(--warn);font-weight:600;}
+
+    .history-table{width:100%;border-collapse:collapse;font-size:0.83em;}
+    .history-table th{background:var(--panel-2);color:var(--muted);padding:10px 12px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:0.75em;text-transform:uppercase;letter-spacing:0.6px;}
+    .history-table td{padding:10px 12px;border-bottom:1px solid var(--line-soft);color:var(--text-dim);}
+
+    .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:0.72em;font-weight:600;}
+    .badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+    .badge-leaked{background:var(--danger-bg);color:var(--danger);}
+    .badge-safe{background:color-mix(in srgb, var(--accent) 14%, var(--panel));color:var(--accent);}
+
+    .footer{text-align:center;padding:24px;margin-top:20px;border-top:1px solid var(--line);}
+    .footer-quote{color:var(--muted);font-size:0.78em;}
+
+    .verify-hint{font-size:0.72em;color:var(--muted);margin-top:5px;line-height:1.6;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gl-shell">
+  <div class="welcome">
+    <div>
+      <h1>Welcome back, {{ current_user.name }}</h1>
+      <p class="user-tagline">Your accounts are being monitored.</p>
+      <p class="identity">{{ current_user.email }} · Logged in</p>
+    </div>
+    <div class="live-pill"><span class="pulse"></span>MONITORING ACTIVE</div>
+  </div>
+
+  {% set risk_class = 'risk-badge-' ~ risk_level|lower %}
+  {% set ring_color = {'Low':'#3ddc97','Medium':'#ffb347','High':'#ff8a4d','Critical':'#ff4d5e','Unknown':'#6b7787'}[risk_level] %}
+  {% set circumference = 213 %}
+  {% set offset = circumference - (circumference * risk_score / 100) %}
+  <div class="risk-score-card">
+    <div class="risk-score-left">
+      <div class="risk-score-ring">
+        <svg viewBox="0 0 84 84">
+          <circle class="ring-bg" cx="42" cy="42" r="34"></circle>
+          <circle class="ring-fill" cx="42" cy="42" r="34"
+                  stroke="{{ ring_color }}"
+                  stroke-dasharray="{{ circumference }}"
+                  stroke-dashoffset="{{ offset }}"></circle>
+        </svg>
+        <div class="risk-score-num">{{ risk_score }}</div>
+      </div>
+      <div class="risk-score-info">
+        <h2>Security Risk Score</h2>
+        <div class="risk-score-level {{ risk_class }}">{{ risk_level }} Risk</div>
+        <div class="risk-score-sub">Based on breach history, source count &amp; recency</div>
+      </div>
+    </div>
+  </div>
+
+  {% if not current_user.email_verified %}
+  <div class="warning-box">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+    Please confirm your email address — until then you won't receive automated breach alerts.
+    <form method="post" action="/resend-verification">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <button type="submit">Resend link</button>
+    </form>
+  </div>
+  {% endif %}
+  {% if not current_user.is_paid %}
+  <div class="warning-box">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    Your account is not activated. All scan features are locked.
+    <a href="/pricing">Unlock for ₹499 →</a>
+  </div>
+  {% endif %}
+  <div class="stats">
+    <div class="stat-box">
+      <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+      <div class="num">{{ total_scans }}</div><div class="lbl">Total Scans</div>
+    </div>
+    <div class="stat-box">
+      <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/></svg>
+      <div class="num" style="color:var(--danger);">{{ leaked_scans }}</div><div class="lbl">Leaks Found</div>
+    </div>
+    <div class="stat-box">
+      <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V5l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg>
+      <div class="num" style="color:var(--accent);">{{ total_scans - leaked_scans }}</div><div class="lbl">Clean Results</div>
+    </div>
+    <div class="stat-box">
+      <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      <div class="num" style="color:var(--warn);">{{ open_findings }}</div><div class="lbl">Open Findings</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('password',event)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Password
+    </button>
+    <button class="tab-btn" onclick="showTab('email',event)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
+      Email
+    </button>
+    <button class="tab-btn" onclick="showTab('bulk',event)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/></svg>
+      Bulk CSV
+    </button>
+    <button class="tab-btn" onclick="showTab('domains',event)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10Z"/></svg>
+      Domains
+    </button>
+    <button class="tab-btn" onclick="showTab('history',event)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
+      History
+    </button>
+  </div>
+  <div id="tab-password" class="tab-content active">
+    <div class="card">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Password Breach Check</h2>
+      <p class="card-desc">Checked via k-anonymity — your real password is never sent anywhere.</p>
+      <input type="password" id="passwordInput" placeholder="Enter password to check..."/>
+      <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+      <div class="strength-label" id="strengthLabel">Password strength: —</div>
+      <button onclick="checkPassword()" id="pwdBtn">Scan password</button>
+      <div class="loader" id="pwdLoader">Scanning databases...</div>
+      <div class="result-box" id="pwdResult"></div>
+    </div>
+  </div>
+  <div id="tab-email" class="tab-content">
+    <div class="card">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>Email Breach Check</h2>
+      <p class="card-desc">Cross-referenced against every configured breach intelligence provider.</p>
+      <input type="text" id="emailInput" placeholder="Enter email address..."/>
+      <button onclick="checkEmail()" id="emailBtn">Scan email</button>
+      <div class="loader" id="emailLoader">Checking breach databases...</div>
+      <div class="result-box" id="emailResult"></div>
+      <button onclick="downloadEmailPDF()" id="emailPdfBtn" style="display:none;margin-top:10px;background:transparent;color:var(--text);border:1px solid var(--line);">Download PDF report</button>
+    </div>
+  </div>
+  <div id="tab-bulk" class="tab-content">
+    <div class="card">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/></svg>Bulk Email Check</h2>
+      <p class="card-desc">Upload a CSV with one email per line. Max 100 emails.</p>
+      <div class="file-drop" onclick="document.getElementById('csvFile').click()">
+        <div>Click to upload CSV file</div>
+        <div style="font-size:0.75em;margin-top:4px;color:var(--muted);">one email per line</div>
+        <input type="file" id="csvFile" accept=".csv" onchange="fileSelected(this)"/>
+        <div class="file-name" id="fileName"></div>
+      </div>
+      <button onclick="checkBulk()" id="bulkBtn" disabled>Scan all emails</button>
+      <div class="loader" id="bulkLoader">Scanning emails... this may take a few minutes</div>
+      <div id="bulkResult" style="display:none;margin-top:18px;">
+        <div class="bulk-summary">
+          <div class="summary-box summary-total"><div class="num" id="totalCount">0</div><div class="lbl">Total</div></div>
+          <div class="summary-box summary-leaked"><div class="num" id="leakedCount" style="color:var(--danger)">0</div><div class="lbl">Leaked</div></div>
+          <div class="summary-box summary-safe"><div class="num" id="safeCount" style="color:var(--accent)">0</div><div class="lbl">Safe</div></div>
+        </div>
+        <table><thead><tr><th>#</th><th>Email</th><th>Status</th><th>Breaches</th></tr></thead>
+        <tbody id="bulkTableBody"></tbody></table>
+      </div>
+      <div class="result-box result-error" id="bulkError" style="display:none;"></div>
+      <button onclick="downloadBulkPDF()" id="bulkPdfBtn" style="display:none;margin-top:10px;background:transparent;color:var(--text);border:1px solid var(--line);">Download PDF report</button>
+    </div>
+  </div>
+  <div id="tab-domains" class="tab-content">
+    <div class="card">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10Z"/></svg>Domain Monitoring</h2>
+      <p class="card-desc">
+        Track breach exposure across an entire company domain. Ownership must be verified via a DNS TXT record before any scan runs.
+      </p>
+      <p style="color:var(--warn);font-size:0.78em;margin-bottom:14px;border:1px solid color-mix(in srgb, var(--warn) 40%, transparent);border-radius:9px;padding:10px 12px;background:var(--warn-bg);">
+        ⚠ Best-effort coverage: this checks the domain against our current breach-data provider, which is an email/username lookup service rather than a dedicated domain-wide index. A clean scan means nothing was found in that provider's data — it is not a guarantee the domain has zero exposure.
+      </p>
+      {% if current_user.is_admin() %}
+      <form method="post" action="/domains" style="display:flex;gap:8px;margin-bottom:16px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="text" name="domain" placeholder="example.com" style="margin-bottom:0;" required/>
+        <button type="submit" style="width:auto;padding:11px 18px;">Add domain</button>
+      </form>
+      {% endif %}
+      {% if domains %}
+      <table class="history-table">
+        <thead><tr><th>Domain</th><th>Status</th><th>Last Scan</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for d in domains %}
+          <tr>
+            <td>{{ d.domain }}</td>
+            <td>
+              {% if d.verified %}<span class="badge badge-safe">Verified</span>
+              {% else %}<span class="badge badge-leaked">Unverified</span>{% endif %}
+            </td>
+            <td>{{ d.last_scanned_at.strftime('%d %b %Y %H:%M') if d.last_scanned_at else '—' }}</td>
+            <td>
+              {% if not d.verified %}
+              <form method="post" action="/domains/{{ d.id }}/verify" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" style="width:auto;padding:6px 10px;font-size:0.78em;">Check TXT</button>
+              </form>
+              <div class="verify-hint">
+                Add TXT record at <span class="mono">_ghostleaks-verify.{{ d.domain }}</span><br/>
+                value: <span class="mono">ghostleaks-verify={{ d.verification_token }}</span>
+              </div>
+              {% else %}
+              <form method="post" action="/domains/{{ d.id }}/scan" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" style="width:auto;padding:6px 10px;font-size:0.78em;">Scan now</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div style="color:var(--muted);font-size:0.85em;">No domains added yet.</div>
+      {% endif %}
+    </div>
+  </div>
+  <div id="tab-history" class="tab-content">
+    <div class="card">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>Scan History</h2>
+      {% if recent_scans %}
+      <table class="history-table">
+        <thead><tr><th>Type</th><th>Input</th><th>Result</th><th>Date</th></tr></thead>
+        <tbody>
+          {% for scan in recent_scans %}
+          <tr>
+            <td>{{ scan.scan_type.upper() }}</td>
+            <td>{{ scan.input_val }}</td>
+            <td><span class="badge {{ 'badge-leaked' if scan.result == 'leaked' else 'badge-safe' }}">{{ scan.result.upper() }}</span></td>
+            <td>{{ scan.scanned_at.strftime('%d %b %Y %H:%M') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div style="color:var(--muted);font-size:0.85em;">No scans yet. Start by checking a password or email above.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+<div class="footer">
+  <p class="footer-quote">GhostLeaks — your data, watched continuously.</p>
+</div>
+<script>
+// NEW: reads the CSRF token from the meta tag so it can be attached to every fetch() call
+function getCsrfToken(){
+  return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+}
+function showTab(name,event){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(event)event.target.classList.add('active');
+}
+document.getElementById('passwordInput').addEventListener('input',function(){
+  const val=this.value;let score=0;
+  if(val.length>=8)score++;if(val.length>=12)score++;
+  if(/[A-Z]/.test(val))score++;if(/[0-9]/.test(val))score++;
+  if(/[^A-Za-z0-9]/.test(val))score++;
+  const labels=['','Very Weak','Weak','Fair','Strong','Very Strong'];
+  const colors=['','#ff4d5e','#ffb347','#ffb347','#9fe8c4','#3ddc97'];
+  document.getElementById('strengthFill').style.width=(score*20)+'%';
+  document.getElementById('strengthFill').style.background=colors[score]||'#333';
+  document.getElementById('strengthLabel').textContent='Password strength: '+(labels[score]||'—');
+  document.getElementById('strengthLabel').style.color=colors[score]||'#666';
+});
+async function checkPassword(){
+  const pwd=document.getElementById('passwordInput').value.trim();
+  if(!pwd)return;
+  const btn=document.getElementById('pwdBtn');
+  const loader=document.getElementById('pwdLoader');
+  const result=document.getElementById('pwdResult');
+  btn.disabled=true;loader.style.display='block';result.style.display='none';
+  try{
+    const res=await fetch('/check-password',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrfToken()},body:JSON.stringify({password:pwd})});
+    const data=await res.json();
+    loader.style.display='none';result.style.display='block';
+    if(data.found){result.className='result-box result-leaked';result.innerHTML=`Password leaked — found <strong>${data.count.toLocaleString()}</strong> times.<br>Change this password immediately.`;}
+    else if(data.error==='UPGRADE_REQUIRED'){result.className='result-box result-error';result.innerHTML='Account not activated. <a href="/pricing" style="color:var(--warn);">Unlock for ₹499 →</a>';}
+    else{result.className='result-box result-safe';result.innerHTML='Password not found in any known breach database.';}
+  }catch(e){loader.style.display='none';result.style.display='block';result.className='result-box result-error';result.innerHTML='Connection error. Try again.';}
+  btn.disabled=false;
+}
+async function checkEmail(){
+  const email=document.getElementById('emailInput').value.trim();
+  if(!email)return;
+  const btn=document.getElementById('emailBtn');
+  const loader=document.getElementById('emailLoader');
+  const result=document.getElementById('emailResult');
+  btn.disabled=true;loader.style.display='block';result.style.display='none';
+  try{
+    const res=await fetch('/check-email',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrfToken()},body:JSON.stringify({email:email})});
+    const data=await res.json();
+    loader.style.display='none';result.style.display='block';
+    if(data.error==='UPGRADE_REQUIRED'){result.className='result-box result-error';result.innerHTML='Account not activated. <a href="/pricing" style="color:var(--warn);">Unlock for ₹499 →</a>';}
+    else if(data.error==='CHECK_FAILED'){result.className='result-box result-error';result.innerHTML='⚠ '+(data.message||'Check failed — provider unreachable. This is not a confirmed safe result.');}
+    else if(data.error){result.className='result-box result-error';result.innerHTML=data.error;}
+    else if(data.breaches&&data.breaches.length>0){
+      result.className='result-box result-leaked';
+      let html=`Found in <strong>${data.breaches.length}</strong> breach(es):<br><br>`;
+      data.breaches.forEach(b=>{html+=`• <strong>${b.name}</strong><br>`;});
+      result.innerHTML=html;
+      window._lastEmailData={email:email,breaches:data.breaches};
+      document.getElementById('emailPdfBtn').style.display='block';
+    }else{result.className='result-box result-safe';result.innerHTML='Email not found in any known breach.';document.getElementById('emailPdfBtn').style.display='none';}
+  }catch(e){loader.style.display='none';result.style.display='block';result.className='result-box result-error';result.innerHTML='Connection error.';}
+  btn.disabled=false;
+}
+function fileSelected(input){
+  if(input.files.length>0){document.getElementById('fileName').textContent='✓ '+input.files[0].name;document.getElementById('bulkBtn').disabled=false;}
+}
+async function checkBulk(){
+  const fileInput=document.getElementById('csvFile');
+  if(!fileInput.files.length)return;
+  const btn=document.getElementById('bulkBtn');
+  const loader=document.getElementById('bulkLoader');
+  const resultDiv=document.getElementById('bulkResult');
+  const errorDiv=document.getElementById('bulkError');
+  btn.disabled=true;loader.style.display='block';resultDiv.style.display='none';errorDiv.style.display='none';
+  const formData=new FormData();
+  formData.append('csv_file',fileInput.files[0]);
+  try{
+    const res=await fetch('/bulk-check',{method:'POST',headers:{'X-CSRFToken':getCsrfToken()},body:formData});
+    const data=await res.json();
+    loader.style.display='none';
+    if(data.error==='UPGRADE_REQUIRED'){errorDiv.style.display='block';errorDiv.innerHTML='Account not activated. <a href="/pricing" style="color:var(--warn);">Unlock for ₹499 →</a>';}
+    else if(data.error){errorDiv.style.display='block';errorDiv.textContent=data.error;}
+    else{
+      document.getElementById('totalCount').textContent=data.total;
+      document.getElementById('leakedCount').textContent=data.leaked;
+      document.getElementById('safeCount').textContent=data.safe;
+      if(data.check_failed>0){
+        errorDiv.style.display='block';
+        errorDiv.className='result-box result-error';
+        errorDiv.innerHTML=`⚠ ${data.check_failed} email(s) could not be checked (provider unreachable) — not confirmed safe.`;
+      }
+      const tbody=document.getElementById('bulkTableBody');tbody.innerHTML='';
+      data.results.forEach((r,i)=>{
+        const cls = r.status==='leaked' ? 'status-leaked' : (r.status==='check_failed' ? 'status-warn' : 'status-safe');
+        const label = r.status==='check_failed' ? 'CHECK FAILED' : r.status.toUpperCase();
+        const row=document.createElement('tr');
+        row.innerHTML=`<td>${i+1}</td><td>${r.email}</td><td class="${cls}">${label}</td><td>${r.breach_count>0?r.breaches.join(', '):'—'}</td>`;
+        tbody.appendChild(row);
+      });
+      resultDiv.style.display='block';document.getElementById('bulkPdfBtn').style.display='block';window._lastBulkData=data;
+    }
+  }catch(e){loader.style.display='none';errorDiv.style.display='block';errorDiv.textContent='Error: '+e.message;}
+  btn.disabled=false;
+}
+async function downloadEmailPDF(){
+  if(!window._lastEmailData)return;
+  const res=await fetch('/download-report',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrfToken()},body:JSON.stringify({type:'email',data:window._lastEmailData})});
+  const blob=await res.blob();const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='email_breach_report.pdf';a.click();
+}
+async function downloadBulkPDF(){
+  if(!window._lastBulkData)return;
+  const res=await fetch('/download-report',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrfToken()},body:JSON.stringify({type:'bulk',data:window._lastBulkData})});
+  const blob=await res.blob();const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='bulk_breach_report.pdf';a.click();
+}
+document.getElementById('passwordInput').addEventListener('keypress',e=>{if(e.key==='Enter')checkPassword();});
+document.getElementById('emailInput').addEventListener('keypress',e=>{if(e.key==='Enter')checkEmail();});
+</script>
+{% endblock %}

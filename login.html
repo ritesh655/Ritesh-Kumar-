@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Login — GhostLeaks{% endblock %}
+
+{% block nav_brand_href %}/{% endblock %}
+{% block nav_brand_label %}GHOSTLEAKS{% endblock %}
+
+{% block nav_links %}
+<a href="/login" class="btn-ghost active">Login</a>
+    <a href="/register" class="btn-solid">Register</a>
+{% endblock %}
+
+{% block extra_style %}
+<style>
+    :root{ --accent:#3ddc97; }
+    body{display:flex;flex-direction:column;}
+    .auth-main{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px;position:relative;overflow:hidden;}
+    .auth-main::before{
+      content:'';position:absolute;top:-30%;left:50%;transform:translateX(-50%);
+      width:640px;height:640px;border-radius:50%;
+      background:radial-gradient(circle, color-mix(in srgb, var(--accent) 10%, transparent) 0%, transparent 65%);
+      pointer-events:none;
+    }
+    .auth-card{
+      background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:38px 36px;
+      width:100%;max-width:410px;box-shadow:var(--shadow-lift);position:relative;z-index:1;
+    }
+    .auth-icon{
+      width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+      background:color-mix(in srgb, var(--accent) 14%, var(--panel-2));border:1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+      margin-bottom:18px;
+    }
+    .auth-icon svg{width:20px;height:20px;stroke:var(--accent);}
+    .auth-card h1{color:var(--text);font-size:1.4em;margin-bottom:6px;font-weight:600;}
+    .auth-sub{color:var(--muted);font-size:0.85em;margin-bottom:26px;line-height:1.5;}
+    .field-icon-wrap{position:relative;}
+    .field-icon-wrap svg{position:absolute;left:13px;top:13px;width:16px;height:16px;stroke:var(--muted);pointer-events:none;}
+    .field-icon-wrap input{padding-left:38px;}
+    .auth-link{text-align:center;margin-top:14px;font-size:0.82em;color:var(--muted);}
+    .auth-link a{color:var(--accent);text-decoration:none;font-weight:500;}
+    .auth-link a:hover{text-decoration:underline;}
+    .auth-divider{height:1px;background:var(--line);margin:22px 0 4px;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-main">
+  <div class="auth-card">
+    <div class="auth-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V5l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg>
+    </div>
+    <h1>Welcome back</h1>
+    <p class="auth-sub">Log in to your breach monitoring dashboard.</p>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <label>Email address</label>
+      <div class="field-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
+        <input type="email" name="email" placeholder="you@example.com" required/>
+      </div>
+      <label>Password</label>
+      <div class="field-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input type="password" name="password" placeholder="Your password" required/>
+      </div>
+      <button type="submit" class="gl-btn">Log in</button>
+    </form>
+    <div class="auth-divider"></div>
+    <div class="auth-link">Don't have an account? <a href="/register">Register here</a></div>
+    <div class="auth-link"><a href="/forgot-password">Forgot password?</a></div>
+  </div>
+</div>
+{% endblock %}

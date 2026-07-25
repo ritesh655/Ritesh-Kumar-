@@ -1,0 +1,198 @@
+/* ==========================================================================
+   GhostLeaks — Enterprise Design System
+   Shared visual language for every page. Pages still set --accent from
+   {{ brand.color }} inline (white-label branding is per-tenant data, so it
+   has to stay dynamic) — everything else lives here.
+   ========================================================================== */
+
+:root{
+  --bg:#080b10;
+  --bg-grid: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.035) 1px, transparent 0);
+  --panel:#0e131b;
+  --panel-2:#131a25;
+  --panel-hover:#161e2a;
+  --line:#1d2733;
+  --line-soft:#141b26;
+  --danger:#ff5468;
+  --danger-bg:#241016;
+  --warn:#ffb020;
+  --warn-bg:#241a0a;
+  --info:#5b8def;
+  --info-bg:#0e1a2e;
+  --text:#e7ecf3;
+  --text-dim:#aab4c2;
+  --muted:#7c8798;
+  --radius:12px;
+  --radius-sm:8px;
+  --shadow-card:0 1px 2px rgba(0,0,0,0.4), 0 8px 24px -8px rgba(0,0,0,0.5);
+  --shadow-lift:0 4px 12px rgba(0,0,0,0.35), 0 16px 40px -12px rgba(0,0,0,0.6);
+}
+
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  font-family:'Inter',sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(ellipse 900px 500px at 50% -10%, rgba(91,141,239,0.06), transparent),
+    var(--bg-grid),
+    var(--bg);
+  background-size:auto, 22px 22px, auto;
+  min-height:100vh;
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:0.001ms !important;animation-iteration-count:1 !important;transition-duration:0.001ms !important;scroll-behavior:auto !important;}
+}
+
+.mono{font-family:'JetBrains Mono',monospace;}
+h1,h2,h3,h4{font-family:'Space Grotesk',sans-serif;letter-spacing:-0.01em;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px;}
+
+/* ---------- Layout shells ---------- */
+.gl-shell{max-width:900px;margin:0 auto;padding:0 20px 60px;}
+.gl-shell-wide{max-width:1080px;margin:0 auto;padding:0 20px 60px;}
+.gl-shell-narrow{max-width:640px;margin:0 auto;padding:0 20px 60px;}
+
+/* ---------- Navigation ---------- */
+.gl-nav{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  padding:14px 24px;
+  background:rgba(8,11,16,0.82);
+  border-bottom:1px solid var(--line);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  position:sticky;top:0;z-index:50;
+}
+.nav-brand{display:flex;align-items:center;gap:9px;text-decoration:none;flex-shrink:0;}
+.nav-brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent), 0 0 14px color-mix(in srgb, var(--accent) 70%, transparent);}
+.nav-brand span{font-family:'Space Grotesk',sans-serif;font-weight:600;color:var(--text);font-size:1.02rem;letter-spacing:0.2px;}
+.nav-links{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.nav-user{font-family:'JetBrains Mono',monospace;color:var(--muted);font-size:0.72rem;white-space:nowrap;padding:0 4px;}
+.nav-user span{color:var(--accent);}
+
+.btn-ghost{
+  background:transparent;border:1px solid transparent;color:var(--text-dim);
+  padding:7px 13px;font-family:'Inter',sans-serif;font-size:0.82rem;font-weight:500;
+  cursor:pointer;text-decoration:none;border-radius:8px;transition:all .15s ease;white-space:nowrap;
+}
+.btn-ghost:hover{border-color:var(--line);background:var(--panel-2);color:var(--text);}
+.btn-ghost.active{
+  border-color:color-mix(in srgb, var(--accent) 40%, transparent) !important;
+  color:var(--accent) !important;
+  background:color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.btn-solid{
+  background:var(--accent);border:1px solid var(--accent);color:#06110c;
+  padding:7px 15px;font-size:0.82rem;font-weight:600;cursor:pointer;text-decoration:none;
+  border-radius:8px;transition:all .15s ease;
+}
+.btn-solid:hover{filter:brightness(1.08);transform:translateY(-1px);}
+.btn-logout{background:transparent;border:none;color:var(--muted);font-size:0.8rem;cursor:pointer;text-decoration:none;padding:7px 10px;transition:color .15s;}
+.btn-logout:hover{color:var(--danger);}
+
+/* ---------- Buttons (forms) ---------- */
+.gl-btn{
+  width:100%;padding:12px;background:var(--accent);color:#06110c;border:none;border-radius:9px;
+  font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;font-size:0.92em;
+  transition:filter .15s ease, transform .1s ease;letter-spacing:0.2px;
+}
+.gl-btn:hover{filter:brightness(1.08);}
+.gl-btn:active{transform:scale(0.99);}
+.gl-btn:disabled{background:var(--panel-2);color:var(--muted);cursor:not-allowed;filter:none;border:1px solid var(--line);}
+.gl-btn-secondary{background:transparent;border:1px solid var(--line);color:var(--text);}
+.gl-btn-secondary:hover{border-color:var(--muted);filter:none;background:var(--panel-2);}
+.gl-btn-danger-ghost{background:transparent;border:1px solid color-mix(in srgb, var(--danger) 50%, transparent);color:var(--danger);}
+.gl-btn-danger-ghost:hover{background:var(--danger-bg);filter:none;}
+.gl-btn-auto{width:auto;}
+
+/* ---------- Cards ---------- */
+.gl-card{
+  background:linear-gradient(180deg, var(--panel), var(--panel) 60%, color-mix(in srgb, var(--panel) 92%, black));
+  border:1px solid var(--line);border-radius:var(--radius);padding:26px;margin-bottom:20px;
+  box-shadow:var(--shadow-card);
+  position:relative;
+}
+.gl-card h2, .gl-card h1{color:var(--text);margin:0 0 16px;font-size:0.82em;text-transform:uppercase;letter-spacing:1.4px;font-family:'JetBrains Mono',monospace;font-weight:600;}
+.gl-card-hover:hover{border-color:color-mix(in srgb, var(--muted) 60%, var(--line));box-shadow:var(--shadow-lift);}
+
+/* ---------- Forms ---------- */
+label, .gl-label{display:block;color:var(--muted);font-size:0.76em;margin-bottom:6px;font-weight:500;letter-spacing:0.2px;}
+input[type="text"], input[type="password"], input[type="email"], input[type="color"]{
+  width:100%;padding:11px 13px;background:#070a0f;border:1px solid var(--line);color:var(--text);
+  border-radius:9px;font-family:'Inter',sans-serif;font-size:0.9em;margin-bottom:14px;
+  transition:border-color .15s ease, box-shadow .15s ease;
+}
+input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);}
+input[readonly]{color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:0.82em;cursor:pointer;}
+input[type=color]{height:42px;width:84px;padding:4px;}
+
+/* ---------- Flash messages ---------- */
+.flash{padding:11px 14px;border-radius:9px;font-size:0.83em;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.flash.error{background:var(--danger-bg);border:1px solid color-mix(in srgb, var(--danger) 55%, transparent);color:var(--danger);}
+.flash.success{background:color-mix(in srgb, var(--accent) 10%, var(--panel));border:1px solid color-mix(in srgb, var(--accent) 55%, transparent);color:var(--accent);}
+
+/* ---------- Tables ---------- */
+.gl-table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;font-size:0.85em;}
+.gl-table th{text-align:left;padding:11px 14px;color:var(--muted);font-size:0.7em;text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid var(--line);background:var(--panel-2);font-family:'JetBrains Mono',monospace;font-weight:600;}
+.gl-table td{padding:11px 14px;border-bottom:1px solid var(--line-soft);color:var(--text-dim);}
+.gl-table tr:last-child td{border-bottom:none;}
+.gl-table tbody tr{transition:background .12s ease;}
+.gl-table tbody tr:hover{background:var(--panel-hover);}
+
+/* ---------- Badges / status chips ---------- */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:0.7em;font-weight:600;letter-spacing:0.3px;}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+.badge-leaked{background:var(--danger-bg);color:var(--danger);}
+.badge-safe{background:color-mix(in srgb, var(--accent) 14%, var(--panel));color:var(--accent);}
+.badge-warn{background:var(--warn-bg);color:var(--warn);}
+.status-leaked{color:var(--danger);font-weight:600;}
+.status-safe{color:var(--accent);}
+.status-warn{color:var(--warn);font-weight:600;}
+
+/* ---------- Tabs ---------- */
+.gl-tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:0;}
+.gl-tab-btn{
+  padding:10px 16px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);
+  cursor:pointer;font-family:'Inter',sans-serif;font-size:0.85em;font-weight:500;transition:all .15s ease;margin-bottom:-1px;
+}
+.gl-tab-btn:hover{color:var(--text-dim);}
+.gl-tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.gl-tab-content{display:none;animation:gl-fade-in .25s ease;}
+.gl-tab-content.active{display:block;}
+@keyframes gl-fade-in{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+/* ---------- Loader ---------- */
+.gl-loader{display:none;align-items:center;gap:9px;color:var(--accent);margin-top:12px;font-size:0.85em;font-family:'JetBrains Mono',monospace;}
+.gl-spinner{width:13px;height:13px;border-radius:50%;border:2px solid color-mix(in srgb, var(--accent) 30%, transparent);border-top-color:var(--accent);animation:gl-spin .7s linear infinite;flex-shrink:0;}
+@keyframes gl-spin{to{transform:rotate(360deg);}}
+
+/* ---------- Icons (inline SVG helper sizing) ---------- */
+.gl-icon{width:16px;height:16px;flex-shrink:0;vertical-align:-3px;}
+.gl-icon-lg{width:20px;height:20px;}
+
+/* ---------- Result boxes ---------- */
+.result-box{margin-top:15px;padding:15px 16px;border-radius:var(--radius-sm);display:none;font-size:0.86em;line-height:1.7;}
+.result-safe{background:color-mix(in srgb, var(--accent) 8%, var(--panel));border:1px solid color-mix(in srgb, var(--accent) 45%, transparent);color:var(--accent);}
+.result-leaked{background:var(--danger-bg);border:1px solid color-mix(in srgb, var(--danger) 45%, transparent);color:var(--danger);}
+.result-error{background:var(--warn-bg);border:1px solid color-mix(in srgb, var(--warn) 45%, transparent);color:var(--warn);}
+
+/* ---------- Risk gauge (signature element) ---------- */
+.gl-gauge{position:relative;flex-shrink:0;}
+.gl-gauge svg{transform:rotate(-90deg);}
+.gl-gauge circle{fill:none;}
+.gl-gauge .ring-bg{stroke:var(--line);}
+.gl-gauge .ring-fill{stroke-linecap:round;transition:stroke-dashoffset .8s cubic-bezier(.22,1,.36,1), stroke .3s;}
+.gl-gauge-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--text);}
+
+/* ---------- Scrollbar (subtle, matches theme) ---------- */
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px;}
+::-webkit-scrollbar-thumb:hover{background:var(--muted);}
+
+/* ---------- Responsive nav dropdown (hamburger) ---------- */
+@media (max-width:768px){
+  .gl-nav .nav-links{padding:0 24px;}
+}

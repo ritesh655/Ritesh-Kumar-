@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Log — {{ brand.name }}{% endblock %}
+
+{% block nav_brand_href %}/dashboard{% endblock %}
+{% block nav_brand_label %}{{ brand.name.upper() }}{% endblock %}
+
+{% block nav_links %}
+<span class="nav-user mono">[ <span>{{ current_user.name }}</span> ]</span>
+    <a href="/dashboard" class="btn-ghost{{ ' active' if request.path == '/dashboard' else '' }}">Dashboard</a>
+    <a href="/findings" class="btn-ghost{{ ' active' if request.path == '/findings' else '' }}">Findings</a>
+    <a href="/timeline" class="btn-ghost{{ ' active' if request.path == '/timeline' else '' }}">Timeline</a>
+    {% if current_user.is_admin() %}<a href="/admin/audit-logs" class="btn-ghost{{ ' active' if request.path == '/admin/audit-logs' else '' }}">Audit Log</a>{% endif %}
+    {% if current_user.role == 'owner' %}<a href="/admin/tenant-settings" class="btn-ghost{{ ' active' if request.path == '/admin/tenant-settings' else '' }}">Workspace</a>{% endif %}
+    <a href="/settings" class="btn-ghost{{ ' active' if request.path == '/settings' else '' }}">Settings</a>
+    <a href="/logout" class="btn-logout">Logout</a>
+{% endblock %}
+
+{% block extra_style %}
+<style>
+    :root{ --accent:{{ brand.color }}; }
+    body{padding-bottom:40px;}
+    .gl-shell-wide{padding-top:32px;}
+    h1{font-size:1.3em;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:10px;}
+    h1 svg{width:20px;height:20px;stroke:var(--accent);}
+    .sub{color:var(--muted);font-size:0.85em;margin-bottom:24px;max-width:600px;line-height:1.6;}
+    table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-card);}
+    th{text-align:left;padding:11px 14px;color:var(--muted);font-size:0.7em;text-transform:uppercase;letter-spacing:0.7px;border-bottom:1px solid var(--line);background:var(--panel-2);font-family:'JetBrains Mono',monospace;font-weight:600;}
+    td{padding:11px 14px;border-bottom:1px solid var(--line-soft);font-size:0.82em;color:var(--text-dim);}
+    tr:last-child td{border-bottom:none;}
+    tr:hover td{background:var(--panel-hover);}
+    .action{font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:500;}
+    .meta{color:var(--muted);font-size:0.85em;}
+    .empty{color:var(--muted);font-size:0.85em;padding:36px;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gl-shell-wide">
+  <h1><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6"/><path d="M9 16h6"/><path d="M9 8h1"/><path d="M4 3h16v18l-4-2-4 2-4-2-4 2Z"/></svg>Audit Log</h1>
+  <p class="sub">Admin-visible record of account and workspace actions — separate from individual scan history.</p>
+  {% if logs %}
+  <table>
+    <thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Target</th><th>IP</th></tr></thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td class="mono">{{ log.created_at.strftime('%d %b %Y %H:%M') }}</td>
+        <td>{{ log.actor_user_id or '—' }}</td>
+        <td class="action">{{ log.action }}</td>
+        <td class="meta">{{ log.target or '—' }}</td>
+        <td class="mono meta">{{ log.ip_address or '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">No audit events yet.</div>
+  {% endif %}
+</div>
+{% endblock %}

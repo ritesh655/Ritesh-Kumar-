@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Settings — GhostLeaks{% endblock %}
+
+{% block nav_brand_href %}/dashboard{% endblock %}
+{% block nav_brand_label %}GHOSTLEAKS{% endblock %}
+
+{% block nav_links %}
+<span class="nav-user mono">[ <span>{{ current_user.name }}</span> ]</span>
+    <a href="/dashboard" class="btn-ghost{{ ' active' if request.path == '/dashboard' else '' }}">Dashboard</a>
+    <a href="/findings" class="btn-ghost{{ ' active' if request.path == '/findings' else '' }}">Findings</a>
+    <a href="/timeline" class="btn-ghost{{ ' active' if request.path == '/timeline' else '' }}">Timeline</a>
+    {% if current_user.is_admin() %}<a href="/admin/audit-logs" class="btn-ghost{{ ' active' if request.path == '/admin/audit-logs' else '' }}">Audit Log</a>{% endif %}
+    {% if current_user.role == 'owner' %}<a href="/admin/tenant-settings" class="btn-ghost{{ ' active' if request.path == '/admin/tenant-settings' else '' }}">Workspace</a>{% endif %}
+    <a href="/settings" class="btn-ghost{{ ' active' if request.path == '/settings' else '' }}">Settings</a>
+    <a href="/logout" class="btn-logout">Logout</a>
+{% endblock %}
+
+{% block extra_style %}
+<style>
+    :root{ --accent:#3ddc97; }
+    body{padding-bottom:40px;}
+    .gl-shell-narrow{padding-top:32px;}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:26px;margin-bottom:20px;box-shadow:var(--shadow-card);}
+    h1{color:var(--text);font-size:1.15em;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:9px;}
+    h1 svg{width:19px;height:19px;stroke:var(--accent);}
+    .sub{color:var(--muted);font-size:0.83em;margin-bottom:24px;}
+    input{width:100%;padding:11px 13px;background:#070a0f;border:1px solid var(--line);color:var(--text);border-radius:9px;font-size:0.9em;margin-bottom:14px;transition:border-color .15s,box-shadow .15s;}
+    input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);}
+    input[readonly]{color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:0.82em;cursor:pointer;}
+    button{width:100%;padding:12px;background:var(--accent);color:#06110c;border:none;border-radius:9px;font-weight:600;cursor:pointer;font-size:0.92em;transition:filter .15s;}
+    button:hover{filter:brightness(1.08);}
+    .btn-secondary{background:transparent;border:1px solid var(--line);color:var(--text);}
+    .btn-secondary:hover{border-color:var(--muted);filter:none;}
+    .btn-danger-ghost{background:transparent;border:1px solid color-mix(in srgb, var(--danger) 50%, transparent);color:var(--danger);}
+    .btn-danger-ghost:hover{background:var(--danger-bg);filter:none;}
+    .info{color:var(--muted);font-size:0.82em;margin-bottom:20px;line-height:1.7;}
+    .info a{color:var(--accent);text-decoration:none;}
+    .info a:hover{text-decoration:underline;}
+
+    .monitoring-status{padding:13px 16px;border-radius:9px;font-size:0.82em;margin-bottom:22px;display:flex;align-items:center;gap:10px;}
+    .monitoring-status.active{background:color-mix(in srgb, var(--accent) 8%, var(--panel));border:1px solid color-mix(in srgb, var(--accent) 40%, transparent);color:var(--accent);}
+    .monitoring-status.inactive{background:var(--danger-bg);border:1px solid color-mix(in srgb, var(--danger) 40%, transparent);color:var(--danger);}
+    .status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+    .status-dot.green{background:var(--accent);box-shadow:0 0 6px var(--accent);}
+    .status-dot.red{background:var(--danger);box-shadow:0 0 6px var(--danger);}
+
+    .api-key-row{display:flex;gap:8px;margin-bottom:8px;}
+    .api-key-row input{margin-bottom:0;flex:1;}
+    .copy-btn{width:auto;padding:11px 16px;background:transparent;border:1px solid var(--line);color:var(--text);flex-shrink:0;font-size:0.82em;}
+    .copy-btn:hover{border-color:var(--accent);color:var(--accent);filter:none;}
+    .copy-hint{color:var(--muted);font-size:0.74em;margin-bottom:16px;}
+    .code-block{background:#070a0f;border:1px solid var(--line);border-radius:9px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:0.74em;color:var(--muted);margin-bottom:16px;overflow-x:auto;white-space:pre;line-height:1.7;}
+    .code-block .hl{color:var(--accent);}
+    .endpoint-row{display:flex;align-items:baseline;gap:8px;padding:6px 0;font-size:0.85em;}
+    .method{font-family:'JetBrains Mono',monospace;font-size:0.78em;font-weight:700;padding:2px 7px;border-radius:5px;flex-shrink:0;}
+    .method-post{background:color-mix(in srgb, var(--accent) 15%, transparent);color:var(--accent);}
+    .method-get{background:color-mix(in srgb, var(--info) 18%, transparent);color:var(--info);}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gl-shell-narrow">
+  <div class="card">
+    <h1><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Settings</h1>
+    <p class="sub">Manage your API key and account</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <div class="monitoring-status active">
+      <div class="status-dot green"></div>
+      <span>Email monitoring active — daily breach alerts enabled for paid accounts</span>
+    </div>
+
+    <div class="info">
+      <span style="color:var(--muted);">GhostLeaks automatically scans your email every day and alerts you if your data appears in a new breach. Add a webhook URL below to also get notified in Slack, Teams, or any custom endpoint.</span>
+    </div>
+
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <label>Webhook URL (optional)</label>
+      <input type="text" name="webhook_url" placeholder="https://hooks.slack.com/... or your endpoint" value="{{ current_user.webhook_url or '' }}"/>
+      <p class="copy-hint" style="margin-top:-10px;margin-bottom:16px;">GhostLeaks will POST a JSON payload here whenever a new breach is detected — works with Slack, Teams, or any custom endpoint.</p>
+
+      <button type="submit">Save settings</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h1><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>Developer API</h1>
+    <p class="sub">Integrate GhostLeaks into your own tools, SIEM, or dashboard</p>
+
+    <label>Your API key</label>
+    <div class="api-key-row">
+      <input type="text" id="apiKeyField" readonly value="{{ current_user.api_key or 'Not generated yet' }}" onclick="this.select()"/>
+      <button type="button" class="copy-btn" onclick="copyApiKey()">Copy</button>
+    </div>
+    <p class="copy-hint">Send this as the <span class="mono" style="color:var(--accent);">X-API-Key</span> header on requests. Keep it secret — anyone with this key can run scans on your account.</p>
+
+    <div class="code-block">curl -X POST {{ app_public_url }}/api/v1/check-email \
+  -H <span class="hl">"X-API-Key: {{ current_user.api_key or 'YOUR_API_KEY' }}"</span> \
+  -H "Content-Type: application/json" \
+  -d '{"email":"someone@example.com"}'</div>
+
+    <div class="info">
+      <strong style="color:var(--text);letter-spacing:0.3px;">Available endpoints</strong>
+      <div class="endpoint-row"><span class="method method-post">POST</span><span class="mono">/api/v1/check-email</span><span style="color:var(--muted);">— {"email": "..."}</span></div>
+      <div class="endpoint-row"><span class="method method-post">POST</span><span class="mono">/api/v1/check-password</span><span style="color:var(--muted);">— {"password": "..."}</span></div>
+      <div class="endpoint-row"><span class="method method-get">GET</span><span class="mono">/api/v1/risk-score</span></div>
+    </div>
+
+    <form method="POST" action="/settings/regenerate-api-key" onsubmit="return confirm('This will invalidate your current API key. Any integrations using it will stop working until updated. Continue?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <button type="submit" class="btn-danger-ghost">Regenerate API key</button>
+    </form>
+  </div>
+</div>
+
+<script>
+function copyApiKey(){
+  const field = document.getElementById('apiKeyField');
+  field.select();
+  navigator.clipboard.writeText(field.value).then(()=>{
+    event.target.textContent = 'Copied!';
+    setTimeout(()=>{ event.target.textContent = 'Copy'; }, 1500);
+  });
+}
+</script>
+{% endblock %}

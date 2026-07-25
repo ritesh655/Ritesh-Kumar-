@@ -1,0 +1,15 @@
+Flask
+Flask-SQLAlchemy
+Flask-Login
+Flask-Bcrypt
+Flask-Limiter
+Flask-WTF
+python-dotenv
+itsdangerous
+requests
+reportlab
+sib-api-v3-sdk
+razorpay
+psycopg2-binary
+gunicorn
+dnspython

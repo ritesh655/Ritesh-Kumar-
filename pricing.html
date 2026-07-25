@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Pricing — GhostLeaks{% endblock %}
+
+{% block nav_brand_href %}/dashboard{% endblock %}
+{% block nav_brand_label %}GHOSTLEAKS{% endblock %}
+
+{% block nav_links %}
+{% if current_user.is_authenticated %}
+    <span class="nav-user mono">[ <span>{{ current_user.name }}</span> ]</span>
+    <a href="/dashboard" class="btn-ghost">Dashboard</a>
+    <a href="/settings" class="btn-ghost">Settings</a>
+    <a href="/logout" class="btn-logout">Logout</a>
+    {% else %}
+    <a href="/login" class="btn-ghost">Login</a>
+    <a href="/register" class="btn-ghost">Register</a>
+    {% endif %}
+{% endblock %}
+
+{% block extra_style %}
+<style>
+    :root{ --accent:#3ddc97; }
+    .gl-shell-narrow{padding-top:60px;}
+    .price-card{
+      background:linear-gradient(160deg, var(--panel), var(--panel-2));
+      border:1px solid var(--line);border-radius:18px;padding:40px 36px;text-align:center;
+      position:relative;overflow:hidden;box-shadow:var(--shadow-lift);
+    }
+    .price-card::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:2px;
+      background:linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+    .plan-tag{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:0.7em;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);background:color-mix(in srgb, var(--accent) 12%, transparent);padding:5px 12px;border-radius:999px;margin-bottom:16px;}
+    h1{color:var(--text);font-size:1.3em;font-weight:600;letter-spacing:0;margin-bottom:6px;}
+    .price{font-size:3.1em;color:var(--text);font-weight:700;font-family:'Space Grotesk',sans-serif;margin:18px 0 4px;}
+    .price span{font-size:0.36em;color:var(--muted);vertical-align:top;margin-top:18px;display:inline-block;font-family:'Inter',sans-serif;font-weight:600;}
+    .period{color:var(--muted);font-size:0.83em;margin-bottom:28px;}
+    .features-list{list-style:none;margin:20px 0 28px;text-align:left;padding:0;}
+    .features-list li{padding:11px 0;border-bottom:1px solid var(--line-soft);color:var(--text);font-size:0.87em;display:flex;align-items:center;gap:10px;}
+    .features-list li:last-child{border-bottom:none;}
+    .features-list li svg{width:16px;height:16px;stroke:var(--accent);flex-shrink:0;}
+    .coming-soon{background:var(--warn-bg);border:1px solid color-mix(in srgb, var(--warn) 45%, transparent);border-radius:9px;padding:14px;color:var(--warn);font-size:0.85em;margin-top:6px;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gl-shell-narrow">
+  <div class="price-card">
+    <span class="plan-tag">Most popular</span>
+    <h1>Pro Plan</h1>
+    <div class="price"><span>₹</span>499</div>
+    <div class="period">one-time · lifetime access</div>
+    <ul class="features-list">
+      <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Email Breach Check</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Bulk CSV Scan (up to 100 emails)</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>PDF Report Download</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Priority Scan Speed</li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Lifetime Access — no subscription</li>
+    </ul>
+    <div class="coming-soon">Launching after beta — stay tuned</div>
+  </div>
+</div>
+{% endblock %}

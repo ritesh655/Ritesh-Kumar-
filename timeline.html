@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Exposure Timeline — {{ brand.name }}{% endblock %}
+
+{% block nav_brand_href %}/dashboard{% endblock %}
+{% block nav_brand_label %}{{ brand.name.upper() }}{% endblock %}
+
+{% block nav_links %}
+<span class="nav-user mono">[ <span>{{ current_user.name }}</span> ]</span>
+    <a href="/dashboard" class="btn-ghost{{ ' active' if request.path == '/dashboard' else '' }}">Dashboard</a>
+    <a href="/findings" class="btn-ghost{{ ' active' if request.path == '/findings' else '' }}">Findings</a>
+    <a href="/timeline" class="btn-ghost{{ ' active' if request.path == '/timeline' else '' }}">Timeline</a>
+    {% if current_user.is_admin() %}<a href="/admin/audit-logs" class="btn-ghost{{ ' active' if request.path == '/admin/audit-logs' else '' }}">Audit Log</a>{% endif %}
+    {% if current_user.role == 'owner' %}<a href="/admin/tenant-settings" class="btn-ghost{{ ' active' if request.path == '/admin/tenant-settings' else '' }}">Workspace</a>{% endif %}
+    <a href="/settings" class="btn-ghost{{ ' active' if request.path == '/settings' else '' }}">Settings</a>
+    <a href="/logout" class="btn-logout">Logout</a>
+{% endblock %}
+
+{% block extra_style %}
+<style>
+    :root{ --accent:{{ brand.color }}; }
+    body{padding-bottom:40px;}
+    .gl-shell{padding-top:32px;max-width:760px;}
+    h1{font-size:1.3em;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:10px;}
+    h1 svg{width:20px;height:20px;stroke:var(--accent);}
+    .sub{color:var(--muted);font-size:0.85em;margin-bottom:30px;}
+    .tl{position:relative;padding-left:28px;}
+    .tl::before{content:'';position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:linear-gradient(var(--line), var(--line-soft));}
+    .tl-item{position:relative;margin-bottom:20px;animation:gl-fade-in .3s ease;}
+    .tl-item::before{content:'';position:absolute;left:-27px;top:5px;width:11px;height:11px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent), 0 0 8px var(--accent);}
+    .tl-item.status::before{background:var(--warn);box-shadow:0 0 0 3px color-mix(in srgb, var(--warn) 18%, transparent), 0 0 8px var(--warn);}
+    .tl-date{font-family:'JetBrains Mono',monospace;font-size:0.72em;color:var(--muted);margin-bottom:4px;}
+    .tl-body{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:12px 15px;font-size:0.86em;box-shadow:var(--shadow-card);}
+    .tl-body b{color:var(--accent);}
+    .empty{color:var(--muted);font-size:0.85em;padding:36px;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gl-shell">
+  <h1><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>Exposure Timeline</h1>
+  <p class="sub">When each exposure was discovered, and when its status changed.</p>
+  <div class="tl" id="tl"><div class="empty">Loading…</div></div>
+</div>
+<script>
+async function loadTimeline(){
+  const res = await fetch('/api/timeline');
+  const data = await res.json();
+  const tl = document.getElementById('tl');
+  if(!data.events || data.events.length === 0){
+    tl.innerHTML = '<div class="empty">No exposure events yet.</div>';
+    return;
+  }
+  tl.innerHTML = data.events.map(e => {
+    const d = new Date(e.date);
+    const dateStr = d.toLocaleDateString(undefined, {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+    if(e.type === 'discovered'){
+      return `<div class="tl-item"><div class="tl-date">${dateStr}</div><div class="tl-body">Discovered — <b>${e.email}</b> found in <b>${e.source}</b> (confidence ${e.confidence}%)</div></div>`;
+    }
+    return `<div class="tl-item status"><div class="tl-date">${dateStr}</div><div class="tl-body">Status changed — <b>${e.email}</b> / ${e.source} → <b>${e.status.replace('_',' ')}</b></div></div>`;
+  }).join('');
+}
+loadTimeline();
+</script>
+{% endblock %}

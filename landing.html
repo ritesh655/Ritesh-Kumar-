@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}GhostLeaks — Check if your data has leaked{% endblock %}
+
+{% block nav_brand_href %}/{% endblock %}
+{% block nav_brand_label %}GHOSTLEAKS{% endblock %}
+
+{% block nav_links %}
+<a href="/login" class="btn-ghost">Log in</a>
+      <a href="/register" class="btn-solid">Register</a>
+{% endblock %}
+
+{% block extra_style %}
+<style>
+    :root{ --accent:#3ddc97; }
+
+    .flash-messages{max-width:560px;margin:16px auto 0;padding:0 20px;}
+
+    .hero{max-width:760px;margin:0 auto;padding:80px 20px 44px;text-align:center;position:relative;}
+    .hero::before{
+      content:'';position:absolute;top:-10%;left:50%;transform:translateX(-50%);
+      width:700px;height:700px;border-radius:50%;z-index:-1;
+      background:radial-gradient(circle, color-mix(in srgb, var(--accent) 9%, transparent) 0%, transparent 65%);
+    }
+    .eyebrow{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:20px;display:inline-flex;align-items:center;gap:8px;}
+    .eyebrow::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent);}
+    .hero h1{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:2.6em;line-height:1.2;color:var(--text);margin-bottom:18px;letter-spacing:-0.01em;}
+    .hero h1 .hl{color:var(--accent);}
+    .hero p{color:var(--muted);font-size:1.05em;line-height:1.7;max-width:500px;margin:0 auto 32px;}
+    .hero-btns{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;}
+    .btn-hero{display:inline-block;padding:14px 30px;border-radius:9px;font-size:0.93em;font-weight:600;text-decoration:none;cursor:pointer;transition:all .15s ease;}
+    .btn-hero-primary{background:var(--accent);color:#06110c;border:none;}
+    .btn-hero-primary:hover{filter:brightness(1.08);transform:translateY(-1px);}
+    .btn-hero-outline{background:transparent;color:var(--text);border:1px solid var(--line);}
+    .btn-hero-outline:hover{border-color:var(--muted);background:var(--panel-2);}
+
+    /* terminal scan strip — signature element, mimics what the tool actually does */
+    .scan-strip{max-width:560px;margin:42px auto 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 20px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:0.79rem;color:var(--muted);overflow:hidden;box-shadow:var(--shadow-card);}
+    .scan-strip .line{display:flex;gap:9px;align-items:center;margin-bottom:7px;}
+    .scan-strip .line:last-child{margin-bottom:0;}
+    .scan-strip .ok{color:var(--accent);}
+    .scan-strip .cursor{display:inline-block;width:7px;height:13px;background:var(--accent);animation:blink 1s steps(1) infinite;vertical-align:middle;}
+    @keyframes blink{50%{opacity:0;}}
+
+    .features{display:grid;grid-template-columns:1fr;gap:16px;max-width:920px;margin:72px auto 0;padding:0 20px;}
+    @media(min-width:680px){.features{grid-template-columns:repeat(4,1fr);}}
+    .feature-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;transition:all .18s ease;position:relative;overflow:hidden;}
+    .feature-card::before{content:'';position:absolute;top:0;left:0;width:2px;height:100%;background:var(--accent);}
+    .feature-card:hover{transform:translateY(-2px);border-color:color-mix(in srgb, var(--muted) 50%, var(--line));box-shadow:var(--shadow-lift);}
+    .feature-card h3{font-family:'Space Grotesk',sans-serif;color:var(--text);font-size:0.95em;letter-spacing:0;margin-bottom:9px;font-weight:600;}
+    .feature-card p{color:var(--muted);font-size:0.84em;line-height:1.6;}
+
+    .full-features{max-width:1000px;margin:76px auto 0;padding:0 20px;}
+    .feat-group{margin-bottom:38px;}
+    .feat-group-title{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--accent);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px;padding-bottom:9px;border-bottom:1px solid var(--line);}
+    .feat-grid{display:grid;grid-template-columns:1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+    @media(min-width:680px){.feat-grid{grid-template-columns:1fr 1fr;}}
+    .feat-mini{background:var(--panel);padding:18px 20px;transition:background .15s ease;}
+    .feat-mini:hover{background:var(--panel-hover);}
+    .feat-mini h4{font-weight:600;color:var(--text);font-size:0.9em;margin-bottom:5px;}
+    .feat-mini p{color:var(--muted);font-size:0.81em;line-height:1.6;}
+
+    .section-label{max-width:900px;margin:60px auto 22px;padding:0 20px;text-align:center;}
+    .section-label .eyebrow{margin-bottom:10px;}
+    .section-label h2{font-family:'Space Grotesk',sans-serif;font-size:1.3em;color:var(--text);margin-bottom:10px;font-weight:600;}
+    .section-label p{color:var(--muted);font-size:0.87em;max-width:500px;margin:0 auto;line-height:1.65;}
+
+    .b2b-features{display:grid;grid-template-columns:1fr;gap:18px;max-width:900px;margin:0 auto 68px;padding:0 20px;}
+    @media(min-width:680px){.b2b-features{grid-template-columns:1fr 1fr;}}
+    .b2b-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px;box-shadow:var(--shadow-card);transition:all .18s ease;}
+    .b2b-card:hover{border-color:color-mix(in srgb, var(--muted) 50%, var(--line));box-shadow:var(--shadow-lift);}
+    .b2b-card .b2b-tag{font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--accent);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;display:block;}
+    .b2b-card h3{font-family:'Space Grotesk',sans-serif;color:var(--text);font-size:1.1em;margin-bottom:11px;font-weight:600;}
+    .b2b-card p{color:var(--muted);font-size:0.86em;line-height:1.7;margin-bottom:18px;}
+
+    .risk-demo{display:flex;align-items:center;gap:18px;background:#070a0f;border:1px solid var(--line);border-radius:10px;padding:18px;}
+    .risk-ring-mini{position:relative;width:58px;height:58px;flex-shrink:0;}
+    .risk-ring-mini svg{transform:rotate(-90deg);width:58px;height:58px;}
+    .risk-ring-mini circle{fill:none;stroke-width:5;}
+    .risk-ring-mini .bg{stroke:var(--line);}
+    .risk-ring-mini .fill{stroke:var(--warn);stroke-linecap:round;stroke-dasharray:157;stroke-dashoffset:50;}
+    .risk-num{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:0.9em;color:var(--text);}
+    .risk-demo-text .lvl{font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--warn);font-size:0.9em;}
+    .risk-demo-text .desc{color:var(--muted);font-size:0.76em;margin-top:3px;}
+
+    .api-demo{background:#070a0f;border:1px solid var(--line);border-radius:10px;padding:16px 18px;font-family:'JetBrains Mono',monospace;font-size:0.73rem;color:var(--muted);line-height:1.8;overflow-x:auto;white-space:pre;}
+    .api-demo .m{color:var(--accent);}
+    .api-demo .k{color:#9fb8ff;}
+
+    .trust-row{max-width:900px;margin:0 auto 64px;padding:0 20px;display:flex;flex-wrap:wrap;gap:26px;justify-content:center;color:var(--muted);font-size:0.79rem;font-family:'JetBrains Mono',monospace;}
+    .trust-row span{display:flex;align-items:center;gap:7px;}
+    .trust-row span::before{content:'✓';color:var(--accent);}
+
+    footer{text-align:center;padding:32px 20px;border-top:1px solid var(--line);color:var(--muted);font-size:0.79rem;}
+</style>
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-messages">
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="hero">
+    <div class="eyebrow mono">Your data, checked instantly</div>
+    <h1>Find out if your <span class="hl">password or email</span> has already leaked online.</h1>
+    <p>Type in your email or password and we'll instantly tell you if it has ever been part of a data breach — plus keep watching so you find out before anyone misuses it.</p>
+    <div class="hero-btns">
+      <a href="/register" class="btn-hero btn-hero-primary">Check for free</a>
+      <a href="/login" class="btn-hero btn-hero-outline">Log in</a>
+    </div>
+
+    <div class="scan-strip">
+      <div class="line"><span>$</span><span>ghostleaks --scan email@example.com</span></div>
+      <div class="line"><span class="ok">✓</span><span>checked against 14 billion+ leaked records</span></div>
+      <div class="line"><span class="ok">✓</span><span>your real password is never sent anywhere — 100% safe</span></div>
+      <div class="line"><span>></span><span>watching for new leaks<span class="cursor"></span></span></div>
+    </div>
+  </div>
+
+  <div class="features">
+    <div class="feature-card"><h3>Password check</h3><p>We check your password safely — your actual password never leaves your device.</p></div>
+    <div class="feature-card"><h3>Email check</h3><p>See if your email shows up in any of 10+ billion leaked records online.</p></div>
+    <div class="feature-card"><h3>Check many at once</h3><p>Upload a list of up to 100 emails and get results for all of them instantly.</p></div>
+    <div class="feature-card"><h3>Download report</h3><p>Get a PDF report of your results to keep for your own records.</p></div>
+  </div>
+
+  <div class="full-features">
+    <div class="section-label" style="margin-bottom:40px;">
+      <div class="eyebrow mono">Everything included</div>
+      <h2>One platform, not four separate tools bolted together.</h2>
+    </div>
+
+    <div class="feat-group">
+      <div class="feat-group-title mono">Scan on demand</div>
+      <div class="feat-grid">
+        <div class="feat-mini"><h4>Password check</h4><p>Checked without your real password ever leaving your device.</p></div>
+        <div class="feat-mini"><h4>Email check</h4><p>Instantly cross-referenced against known breach databases.</p></div>
+        <div class="feat-mini"><h4>Bulk CSV check</h4><p>Upload up to 100 emails and scan them all in one go.</p></div>
+        <div class="feat-mini"><h4>Domain-wide monitoring</h4><p>Track breach exposure across a whole company domain, once ownership is DNS-verified.</p></div>
+      </div>
+    </div>
+
+    <div class="feat-group">
+      <div class="feat-group-title mono">Stay ahead of new leaks</div>
+      <div class="feat-grid">
+        <div class="feat-mini"><h4>Daily automatic monitoring</h4><p>Your accounts are re-checked every day, with no need to run a scan yourself.</p></div>
+        <div class="feat-mini"><h4>Webhook alerts</h4><p>Get pushed straight to Slack, Teams, or any custom endpoint the moment a new breach shows up.</p></div>
+        <div class="feat-mini"><h4>Exposure timeline</h4><p>See exactly when each leak was discovered and when its status changed.</p></div>
+        <div class="feat-mini"><h4>Findings lifecycle</h4><p>Track every exposure from Leaked through Password Changed to Resolved.</p></div>
+      </div>
+    </div>
+
+    <div class="feat-group">
+      <div class="feat-group-title mono">One number, the whole picture</div>
+      <div class="feat-grid">
+        <div class="feat-mini"><h4>Executive Risk Score</h4><p>A single 0–100 score summarizing your overall exposure — no technical read-up needed.</p></div>
+        <div class="feat-mini"><h4>PDF reports</h4><p>Download a clean, shareable report of any scan for your own records.</p></div>
+      </div>
+    </div>
+
+    <div class="feat-group">
+      <div class="feat-group-title mono">Built for teams, not just individuals</div>
+      <div class="feat-grid">
+        <div class="feat-mini"><h4>White-label branding</h4><p>Your logo, name, and color across the dashboard, timeline, and PDF reports — not ours.</p></div>
+        <div class="feat-mini"><h4>Team workspaces</h4><p>Invite teammates with a single link; each workspace stays fully isolated from others.</p></div>
+        <div class="feat-mini"><h4>Role-based access</h4><p>Owner, admin, and member permissions, so people only see what they should.</p></div>
+        <div class="feat-mini"><h4>Admin audit log</h4><p>A record of every account and workspace action, visible to admins only.</p></div>
+      </div>
+    </div>
+
+    <div class="feat-group">
+      <div class="feat-group-title mono">For developers</div>
+      <div class="feat-grid">
+        <div class="feat-mini"><h4>REST API</h4><p>Call every check directly from your own tools, SIEM, or dashboard.</p></div>
+        <div class="feat-mini"><h4>Personal API keys</h4><p>Regenerate anytime — each key is scoped to your account only.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">
+    <div class="eyebrow mono">Built for teams &amp; integrations</div>
+    <h2>Not just a scanner — a security layer you can plug in anywhere.</h2>
+    <p>Two features built for businesses that want more than a one-off check: a clear risk rating, and a way to wire GhostLeaks into tools you already use.</p>
+  </div>
+
+  <div class="b2b-features">
+    <div class="b2b-card">
+      <span class="b2b-tag mono">Risk scoring</span>
+      <h3>Executive Risk Score</h3>
+      <p>Every account gets a single 0–100 score — based on breach history, source count, and how recent the exposure was. One number that tells the whole story, no technical read-up needed.</p>
+      <div class="risk-demo">
+        <div class="risk-ring-mini">
+          <svg viewBox="0 0 56 56">
+            <circle class="bg" cx="28" cy="28" r="25"></circle>
+            <circle class="fill" cx="28" cy="28" r="25"></circle>
+          </svg>
+          <div class="risk-num">68</div>
+        </div>
+        <div class="risk-demo-text">
+          <div class="lvl">Medium Risk</div>
+          <div class="desc">Recalculated live from scan history</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="b2b-card">
+      <span class="b2b-tag mono">Developer API</span>
+      <h3>REST API + Webhooks</h3>
+      <p>Call GhostLeaks directly from your own platform, SIEM, or SOC dashboard — and get pushed a notification the moment a new breach is detected, no polling required.</p>
+      <div class="api-demo">curl -X POST .../api/v1/check-email \
+  -H <span class="m">"X-API-Key: gl_xxxxxxx"</span> \
+  -d <span class="k">'{"email":"user@company.com"}'</span></div>
+    </div>
+  </div>
+
+  <div class="trust-row">
+    <span>Your password is never stored</span>
+    <span>Powered by HaveIBeenPwned</span>
+    <span>Pay once, use it forever</span>
+  </div>
+
+  <footer>
+    Built by Ritesh — GhostLeaks is an independent breach-monitoring tool, not affiliated with HaveIBeenPwned.
+  </footer>
+{% endblock %}
